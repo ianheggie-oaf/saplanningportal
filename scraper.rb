@@ -24,16 +24,20 @@ click_path = [
 click_path.each do |url|
   puts "Visiting click path to hopefully set cookies: #{url} ..."
   agent.get(url)
+  sleep(rand(10.0...20.0))
 end
 
 
 # This endpoint is not "protected" by Kasada, but probably is by Cloudflare
 #url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticessummary"
 url = "https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticessummary"
-applications = JSON.parse(agent.post(url).body)
+response = agent.post(url)
+puts "Got #{response.code} response from #{url} with headers: #{response.header.inspect}"
+applications = JSON.parse(response.body)
 puts "Found #{applications.length} applications to process"
 
 applications.each do |application|
+  sleep(rand(10.0...20.0))
   record = {
     "council_reference" => application["applicationID"].to_s,
     # If there are multiple addresses they are all included in this field separated by ","
@@ -48,8 +52,8 @@ applications.each do |application|
 
   # Instead of sending all comments to PlanSA we want to send comments to the individual councils
   # Luckily that information (the email address) is available by call the "detail" endpoint
-  sleep(rand(1.0...3.0))
   page = agent.post("https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticedetail", aid: application["applicationID"])
+  puts "Got #{response.code} response with headers: #{response.header.inspect}"
   detail = JSON.parse(page.body)
   record["comment_email"] = detail["email"]
   record["comment_authority"] = detail["organisation"]
