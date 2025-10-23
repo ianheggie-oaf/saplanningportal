@@ -5,16 +5,34 @@ require "scraperwiki"
 agent = Mechanize.new
 agent.user_agent = "Ruby/#{RUBY_VERSION} PlanningAlerts scraper for SA Planning Portal (https://www.planningalerts.org.au/about)"
 agent.request_headers = {
-  "Accept" => "application/json,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Accept-Language" => "en-AU,en-GB;q=0.8,en-US;q=0.5,en;q=0.3",
   "Accept-Encoding" => "gzip, deflate",
   "Connection" => "keep-alive",
 }
+# cookie_file = Tempfile.new(['sa_planning_cookies', '.txt'])
+# agent.cookie_jar.save_as = cookie_file.path
+agent.follow_meta_refresh = true
+agent.redirect_ok = true
 
-# This endpoint is not "protected" by Kasada
-url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticessummary"
+click_path = [
+  "https://plan.sa.gov.au/development_application_register",
+  "https://plan.sa.gov.au/have_your_say/notified_developments",
+  "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments"
+  ]
+
+click_path.each do |url|
+  puts "Visiting click path to hopefully set cookies: #{url} ..."
+  agent.get(url)
+end
+
+
+# This endpoint is not "protected" by Kasada, but probably is by Cloudflare
+#url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticessummary"
+url = "https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticessummary"
 applications = JSON.parse(agent.post(url).body)
 puts "Found #{applications.length} applications to process"
+
 applications.each do |application|
   record = {
     "council_reference" => application["applicationID"].to_s,
