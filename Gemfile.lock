@@ -40,7 +40,7 @@ GEM
     net-http-digest_auth (1.4.1)
     net-http-persistent (4.0.6)
       connection_pool (~> 2.2, >= 2.2.4)
-    nokogiri (1.18.10)
+    nokogiri (1.15.7)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     public_suffix (6.0.2)
@@ -59,6 +59,7 @@ PLATFORMS
 
 DEPENDENCIES
   mechanize (~> 2.8.5)
+  nokogiri (~> 1.15.0)
   scraperwiki!
   sqlite3 (~> 1.6.3)
 
