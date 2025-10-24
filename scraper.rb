@@ -36,6 +36,7 @@ puts "Got #{response.code} response from #{url} with headers: #{response.header.
 applications = JSON.parse(response.body)
 puts "Found #{applications.length} applications to process"
 
+found_again = new_records = 0
 applications.each do |application|
   sleep(rand(10.0...20.0))
   record = {
@@ -50,14 +51,27 @@ applications.each do |application|
     "on_notice_to" => Date.strptime(application["closingDate"], "%m/%d/%Y").to_s
   }
 
-  # Instead of sending all comments to PlanSA we want to send comments to the individual councils
-  # Luckily that information (the email address) is available by call the "detail" endpoint
-  page = agent.post("https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticedetail", aid: application["applicationID"])
-  puts "Got #{response.code} response with headers: #{response.header.inspect}"
-  detail = JSON.parse(page.body)
-  record["comment_email"] = detail["email"]
-  record["comment_authority"] = detail["organisation"]
+  existing = ScraperWiki.select("* from data where council_reference = ?", record["council_reference"])
+  if existing&.length == 1
+    record["comment_email"] = existing.first["comment_email"]
+    record["comment_authority"] = existing.first["comment_authority"]
+  end
+
+  if record["comment_authority"].present? && record["comment_email"].present?
+    puts "Reusing comment email and authority from existing record: #{record['council_reference']}"
+    found_again += 1
+  else
+    puts "Retrieving comment email and authority from detail page: #{record['council_reference']}"
+    new_records += 1
+    sleep(rand(DELAY_BETWEEN_REQUESTS_RANGE))
+    # Send comments to the individual councils from the details endpoint rather than PlanSA
+    page = agent.post("https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticedetail", aid: application["applicationID"])
+    detail = JSON.parse(page.body)
+    record["comment_email"] = detail["email"]
+    record["comment_authority"] = detail["organisation"]
+  end
 
   puts "Saving record #{record['council_reference']}, #{record['address']}"
   ScraperWiki.save_sqlite(['council_reference'], record)
 end
+puts "Found #{found_again} applications that were already in the database, and added #{new_records} new applications."
