@@ -2,6 +2,10 @@ require "mechanize"
 require "json"
 require "scraperwiki"
 
+# Require a delay between requests to avoid 429 => Net::HTTPTooManyRequests errors
+# 10 to 20 worked, but added 5 seconds to be safer
+DELAY_BETWEEN_REQUESTS_RANGE = 15.0...25.0
+
 agent = Mechanize.new
 agent.user_agent = "Ruby/#{RUBY_VERSION} PlanningAlerts scraper for SA Planning Portal (https://www.planningalerts.org.au/about)"
 agent.request_headers = {
@@ -38,7 +42,6 @@ puts "Found #{applications.length} applications to process"
 
 found_again = new_records = 0
 applications.each do |application|
-  sleep(rand(10.0...20.0))
   record = {
     "council_reference" => application["applicationID"].to_s,
     # If there are multiple addresses they are all included in this field separated by ","
