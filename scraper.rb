@@ -15,11 +15,20 @@ agent.request_headers = {
 agent.follow_meta_refresh = true
 agent.redirect_ok = true
 
+proxy = ENV["MORPH_AUSTRALIAN_PROXY"]
+if proxy
+  # On morph.io set the environment variable MORPH_AUSTRALIAN_PROXY to
+  # http://morph:password@au.proxy.oaf.org.au:8888 replacing password with
+  # the real password.
+  puts "Using Australian proxy..."
+  agent.agent.set_proxy(proxy)
+end
+
 click_path = [
   "https://plan.sa.gov.au/development_application_register",
   "https://plan.sa.gov.au/have_your_say/notified_developments",
   "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments"
-  ]
+]
 
 click_path.each do |url|
   puts "Visiting click path to hopefully set cookies: #{url} ..."
@@ -27,9 +36,8 @@ click_path.each do |url|
   sleep(rand(10.0...20.0))
 end
 
-
 # This endpoint is not "protected" by Kasada, but probably is by Cloudflare
-#url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticessummary"
+# url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticessummary"
 url = "https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticessummary"
 response = agent.post(url)
 puts "Got #{response.code} response from #{url} with headers: #{response.header.inspect}"
