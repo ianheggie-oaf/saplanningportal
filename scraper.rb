@@ -61,7 +61,7 @@ applications.shuffle.each do |application|
     record["comment_authority"] = existing.first["comment_authority"]
   end
 
-  if record["comment_authority"].present? && record["comment_email"].present?
+  if record["comment_authority"].to_s != '' && record["comment_email"].to_s != ''
     puts "Reusing comment email and authority from existing record: #{record['council_reference']}"
     found_again += 1
   else
