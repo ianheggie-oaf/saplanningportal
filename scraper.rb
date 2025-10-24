@@ -93,9 +93,6 @@ applications.shuffle.each do |application|
       puts "WARNING: Could not find comment email and authority for #{record['council_reference']} from #{page.body}"
     end
   end
-  if show_application
-    puts "First Application data retrieved: #{applications.first.inspect}"
-  end
 
   count_per_authority[record["comment_authority"]] += 1
   puts "Saving record #{record['council_reference']}, #{record['address']}"
@@ -103,6 +100,9 @@ applications.shuffle.each do |application|
   record.each do |k, v|
     count_per_property[k] += 1 if v.to_s != ''
   end
+end
+if show_application
+  puts "First Application data retrieved: #{applications.first.inspect}"
 end
 puts "",
      "Found #{found_again} applications that were already in the database, and added #{new_records} new applications.",
