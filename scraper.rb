@@ -24,17 +24,9 @@ if proxy
   agent.agent.set_proxy(proxy)
 end
 
-click_path = [
-  "https://plan.sa.gov.au/development_application_register",
-  "https://plan.sa.gov.au/have_your_say/notified_developments",
-  "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments"
-]
-
-click_path.each do |url|
-  puts "Visiting click path to hopefully set cookies: #{url} ..."
-  agent.get(url)
-  sleep(rand(10.0...20.0))
-end
+url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments"
+puts "Visiting html page to set cookies: #{url} ..."
+agent.get(url)
 
 # This endpoint is not "protected" by Kasada, but probably is by Cloudflare
 # url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticessummary"
