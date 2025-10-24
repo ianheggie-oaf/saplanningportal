@@ -41,6 +41,8 @@ applications = JSON.parse(response.body)
 puts "Found #{applications.length} applications to process in random order with #{DELAY_BETWEEN_REQUESTS_RANGE} seconds between requests."
 
 found_again = new_records = 0
+count_per_authority = Hash.new(0)
+count_per_property = Hash.new(0)
 # Randomise order to avoid looking so bot like AND get something done even if we are blocked after a few records
 applications.shuffle.each do |application|
   record = {
@@ -65,17 +67,43 @@ applications.shuffle.each do |application|
     puts "Reusing comment email and authority from existing record: #{record['council_reference']}"
     found_again += 1
   else
-    puts "Retrieving comment email and authority from detail page: #{record['council_reference']}"
+    # Click to https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/submission?aid=11823
+    # Shows Term Of Use with Accept / Reject buttons
+    aid = application["applicationID"]
+    puts "Retrieving comment email and authority from detail page for #{record['council_reference']} (aid=#{aid.inspect})"
     new_records += 1
     sleep(rand(DELAY_BETWEEN_REQUESTS_RANGE))
     # Send comments to the individual councils from the details endpoint rather than PlanSA
-    page = agent.post("https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticedetail", aid: application["applicationID"])
+    page = agent.post("https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticedetail", aid: aid)
     detail = JSON.parse(page.body)
     record["comment_email"] = detail["email"]
     record["comment_authority"] = detail["organisation"]
+    unless record["comment_authority"].to_s != '' && record["comment_email"].to_s != ''
+      puts "WARNING: Could not find comment email and authority for #{record['council_reference']} from #{page.body}"
+    end
   end
 
+  count_per_authority[record["comment_authority"]] += 1
   puts "Saving record #{record['council_reference']}, #{record['address']}"
   ScraperWiki.save_sqlite(['council_reference'], record)
+  record.each do |k, v|
+    count_per_property[k] += 1 if v.to_s != ''
+  end
 end
-puts "Found #{found_again} applications that were already in the database, and added #{new_records} new applications."
+puts "",
+     "Found #{found_again} applications that were already in the database, and added #{new_records} new applications.",
+     "",
+     "Count  Authority",
+     "-----  ------------------"
+
+count_per_authority.sort.each do |authority, count|
+  puts "#{count.to_s.rjust(5)}  #{authority}"
+end
+
+puts "",
+     "Count  Non blank Attribute",
+     "-----  -------------------"
+
+count_per_property.sort.each do |attribute, count|
+  puts "#{count.to_s.rjust(5)}  #{attribute}"
+end
