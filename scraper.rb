@@ -66,7 +66,12 @@ applications.shuffle.each do |application|
     "on_notice_to" => on_notice_to.to_s
   }
 
-  existing = ScraperWiki.select("* from data where council_reference = ?", record["council_reference"])
+  existing = begin
+               ScraperWiki.select("* from data where council_reference = ?", record["council_reference"])
+             rescue StandardError => e
+               puts "INFO: Ignoring #{e.message} while looking for existing record: #{record['council_reference']}"
+               []
+             end
   if existing&.length == 1
     record["comment_email"] = existing.first["comment_email"]
     record["comment_authority"] = existing.first["comment_authority"]
