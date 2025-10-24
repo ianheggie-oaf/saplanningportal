@@ -54,12 +54,13 @@ applications.shuffle.each do |application|
   council_reference = application["applicationID"]
   aid = application["publicNotificationID"]
   on_notice_to = Date.strptime(application["closingDate"], "%m/%d/%Y")
+  description = application["developmentDescription"].gsub("&hellip;", "...")
   record = {
     "council_reference" => council_reference.to_s,
     # If there are multiple addresses they are all included in this field separated by ","
     # Only use the first address
     "address" => application["propertyAddress"].split(",").first,
-    "description" => application["developmentDescription"],
+    "description" => description,
     # Not clear whether this page will stay around after the notification period is over
     "info_url" => "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/submission?aid=#{aid}",
     "date_scraped" => Date.today.to_s,
