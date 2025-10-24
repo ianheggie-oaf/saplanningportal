@@ -43,8 +43,13 @@ puts "Found #{applications.length} applications to process in random order with 
 found_again = new_records = 0
 count_per_authority = Hash.new(0)
 count_per_property = Hash.new(0)
+show_application = show_detail = true
 # Randomise order to avoid looking so bot like AND get something done even if we are blocked after a few records
 applications.shuffle.each do |application|
+  if show_application
+    puts "Application data retrieved: #{application.inspect}"
+    show_application = false
+  end
   record = {
     "council_reference" => application["applicationID"].to_s,
     # If there are multiple addresses they are all included in this field separated by ","
@@ -75,6 +80,10 @@ applications.shuffle.each do |application|
     sleep(rand(DELAY_BETWEEN_REQUESTS_RANGE))
     # Send comments to the individual councils from the details endpoint rather than PlanSA
     page = agent.post("https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticedetail", aid: aid)
+    if show_detail
+      puts "Page source: #{page.body}"
+      show_detail = false
+    end
     detail = JSON.parse(page.body)
     record["comment_email"] = detail["email"]
     record["comment_authority"] = detail["organisation"]
