@@ -38,10 +38,11 @@ url = "https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticessummary"
 response = agent.post(url)
 puts "Got #{response.code} response from #{url} with headers: #{response.header.inspect}"
 applications = JSON.parse(response.body)
-puts "Found #{applications.length} applications to process"
+puts "Found #{applications.length} applications to process in random order with #{DELAY_BETWEEN_REQUESTS_RANGE} seconds between requests."
 
 found_again = new_records = 0
-applications.each do |application|
+# Randomise order to avoid looking so bot like AND get something done even if we are blocked after a few records
+applications.shuffle.each do |application|
   record = {
     "council_reference" => application["applicationID"].to_s,
     # If there are multiple addresses they are all included in this field separated by ","
