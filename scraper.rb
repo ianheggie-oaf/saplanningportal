@@ -32,6 +32,11 @@ url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notifi
 puts "Visiting html page to set cookies: #{url} ..."
 agent.get(url)
 
+delay = rand(DELAY_BETWEEN_REQUESTS_RANGE)
+total_delay = delay
+puts "Delaying for #{delay.round(2)}s to avoid 429 Too Many Requests errors"
+sleep(delay)
+
 # This endpoint is not "protected" by Kasada, but probably is by Cloudflare
 # url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticessummary"
 url = "https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticessummary"
@@ -74,9 +79,11 @@ applications.shuffle.each do |application|
   else
     # Click to https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/submission?aid=11823
     # Shows Term Of Use with Accept / Reject buttons
-    puts "Retrieving comment email and authority from detail page for #{record['council_reference']} (aid=#{aid.inspect})"
+    delay = rand(DELAY_BETWEEN_REQUESTS_RANGE)
+    puts "Retrieving comment email and authority from detail page for #{record['council_reference']} (aid=#{aid.inspect}, delay=#{delay.round(2)}s)"
     new_records += 1
-    sleep(rand(DELAY_BETWEEN_REQUESTS_RANGE))
+    total_delay += delay
+    sleep(delay)
     # Send comments to the individual councils from the details endpoint rather than PlanSA
     page = agent.post("https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticedetail", aid: aid)
     if show_detail
@@ -106,6 +113,7 @@ if show_application
 end
 puts "",
      "Found #{found_again} applications that were already in the database, and added #{new_records} new applications.",
+     "Added #{total_delay.round(2)} seconds total delay over #{new_records + 1} requests so server doesn't complain!",
      "",
      "Count  Authority",
      "-----  ------------------"
