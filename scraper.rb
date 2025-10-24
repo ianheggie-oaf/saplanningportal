@@ -46,26 +46,26 @@ count_per_property = Hash.new(0)
 show_application = show_detail = true
 # Randomise order to avoid looking so bot like AND get something done even if we are blocked after a few records
 applications.shuffle.each do |application|
-  if show_application
-    puts "Application data retrieved: #{application.inspect}"
-    show_application = false
-  end
+  council_reference = application["applicationID"]
+  aid = application["publicNotificationID"]
+  on_notice_to = Date.strptime(application["closingDate"], "%m/%d/%Y")
   record = {
-    "council_reference" => application["applicationID"].to_s,
+    "council_reference" => council_reference.to_s,
     # If there are multiple addresses they are all included in this field separated by ","
     # Only use the first address
     "address" => application["propertyAddress"].split(",").first,
     "description" => application["developmentDescription"],
     # Not clear whether this page will stay around after the notification period is over
-    "info_url" => "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/submission?aid=#{application['publicNotificationID']}",
+    "info_url" => "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/submission?aid=#{aid}",
     "date_scraped" => Date.today.to_s,
-    "on_notice_to" => Date.strptime(application["closingDate"], "%m/%d/%Y").to_s
+    "on_notice_to" => on_notice_to.to_s
   }
 
   existing = ScraperWiki.select("* from data where council_reference = ?", record["council_reference"])
   if existing&.length == 1
     record["comment_email"] = existing.first["comment_email"]
     record["comment_authority"] = existing.first["comment_authority"]
+    record["on_notice_from"] = existing.first["on_notice_from"]
   end
 
   if record["comment_authority"].to_s != '' && record["comment_email"].to_s != ''
@@ -74,22 +74,27 @@ applications.shuffle.each do |application|
   else
     # Click to https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/submission?aid=11823
     # Shows Term Of Use with Accept / Reject buttons
-    aid = application["applicationID"]
     puts "Retrieving comment email and authority from detail page for #{record['council_reference']} (aid=#{aid.inspect})"
     new_records += 1
     sleep(rand(DELAY_BETWEEN_REQUESTS_RANGE))
     # Send comments to the individual councils from the details endpoint rather than PlanSA
     page = agent.post("https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticedetail", aid: aid)
     if show_detail
-      puts "Page source: #{page.body}"
-      show_detail = false
+      puts "Application data: #{application.inspect}"
+      puts "Detail data: #{page.body}"
+      show_application = show_detail = false
     end
     detail = JSON.parse(page.body)
     record["comment_email"] = detail["email"]
     record["comment_authority"] = detail["organisation"]
+    on_notice_from = Date.strptime(detail["openingDate"], "%m/%d/%Y")
+    record["on_notice_from"] = on_notice_from.to_s
     unless record["comment_authority"].to_s != '' && record["comment_email"].to_s != ''
       puts "WARNING: Could not find comment email and authority for #{record['council_reference']} from #{page.body}"
     end
+  end
+  if show_application
+    puts "First Application data retrieved: #{applications.first.inspect}"
   end
 
   count_per_authority[record["comment_authority"]] += 1
