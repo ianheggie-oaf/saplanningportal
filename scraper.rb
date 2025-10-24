@@ -36,7 +36,7 @@ agent.get(url)
 # url = "https://plan.sa.gov.au/have_your_say/notified_developments/current_notified_developments/assets/getpublicnoticessummary"
 url = "https://cdn.plan.sa.gov.au/public-notifications/getpublicnoticessummary"
 response = agent.post(url)
-puts "Got #{response.code} response from #{url} with headers: #{response.header.inspect}"
+puts "Got #{response.code} response from #{url}"
 applications = JSON.parse(response.body)
 puts "Found #{applications.length} applications to process in random order with #{DELAY_BETWEEN_REQUESTS_RANGE} seconds between requests."
 
