@@ -130,10 +130,12 @@ count_per_authority.sort.each do |authority, count|
   puts "#{count.to_s.rjust(5)}  #{authority}"
 end
 
-puts "",
-     "Count  Non blank Attribute",
-     "-----  -------------------"
+if ENV['DEBUG'] || ENV['MORPH_DEBUG']
+  puts "",
+       "Count  Non blank Attribute",
+       "-----  -------------------"
 
-count_per_property.sort.each do |attribute, count|
-  puts "#{count.to_s.rjust(5)}  #{attribute}"
+  count_per_property.sort.each do |attribute, count|
+    puts "#{count.to_s.rjust(5)}  #{attribute}"
+  end
 end
