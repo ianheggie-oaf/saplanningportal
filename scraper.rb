@@ -2,20 +2,22 @@ require "mechanize"
 require "json"
 require "scraperwiki"
 
+VERSION = "2.0"
+
 # Require a delay between requests to avoid 429 => Net::HTTPTooManyRequests errors
 # 10 to 20 worked, but added 5 seconds to be safer
 DELAY_BETWEEN_REQUESTS_RANGE = 15.0...25.0
 
 agent = Mechanize.new
-agent.user_agent = "Ruby/#{RUBY_VERSION} PlanningAlerts scraper for SA Planning Portal (https://www.planningalerts.org.au/about)"
+agent.user_agent = "Ruby/#{RUBY_VERSION} PlanningAlerts scraper for SA Planning Portal/#{VERSION} (https://www.planningalerts.org.au/about)"
+puts "Using user agent: #{agent.user_agent}"
+
 agent.request_headers = {
   "Accept" => "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
   "Accept-Language" => "en-AU,en-GB;q=0.8,en-US;q=0.5,en;q=0.3",
   "Accept-Encoding" => "gzip, deflate",
   "Connection" => "keep-alive",
 }
-# cookie_file = Tempfile.new(['sa_planning_cookies', '.txt'])
-# agent.cookie_jar.save_as = cookie_file.path
 agent.follow_meta_refresh = true
 agent.redirect_ok = true
 
